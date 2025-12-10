@@ -1,11 +1,9 @@
 use crate::config::{Config, Severity};
-use regex::Regex;
 use serde_yaml::{Value, Mapping};
 use std::collections::HashSet;
 
 #[derive(Debug, Clone)]
 pub struct LintResult {
-    pub file: String,
     pub line: usize,
     pub column: usize,
     pub severity: Severity,
@@ -39,7 +37,6 @@ impl RuleChecker {
         // Проверка синтаксиса
         if let Err(e) = serde_yaml::from_str::<Value>(content) {
             results.push(LintResult {
-                file: file_path.to_string(),
                 line: 1,
                 column: 1,
                 severity: Severity::Error,
@@ -66,10 +63,9 @@ impl RuleChecker {
         results
     }
 
-    fn check_indentation(&self, content: &str, file_path: &str) -> Vec<LintResult> {
+    fn check_indentation(&self, content: &str, _file_path: &str) -> Vec<LintResult> {
         let mut results = vec![];
         let expected_spaces = self.config.rules.indentation.spaces;
-        let _space_str = " ".repeat(expected_spaces); // Сохраняем для возможного использования
 
         for (i, line) in content.lines().enumerate() {
             let line_num = i + 1;
@@ -84,7 +80,6 @@ impl RuleChecker {
                 let leading_spaces = line.len() - line.trim_start().len();
                 if leading_spaces % expected_spaces != 0 {
                     results.push(LintResult {
-                        file: file_path.to_string(),
                         line: line_num,
                         column: 1,
                         severity: Severity::Error,
@@ -99,7 +94,7 @@ impl RuleChecker {
         results
     }
 
-    fn check_trailing_spaces(&self, content: &str, file_path: &str) -> Vec<LintResult> {
+    fn check_trailing_spaces(&self, content: &str, _file_path: &str) -> Vec<LintResult> {
         let mut results = vec![];
 
         for (i, line) in content.lines().enumerate() {
@@ -107,7 +102,6 @@ impl RuleChecker {
 
             if line.ends_with(' ') || line.ends_with('\t') {
                 results.push(LintResult {
-                    file: file_path.to_string(),
                     line: line_num,
                     column: line.len(),
                     severity: self.config.rules.trailing_spaces.level.clone(),
@@ -121,7 +115,7 @@ impl RuleChecker {
         results
     }
 
-    fn check_line_length(&self, content: &str, file_path: &str) -> Vec<LintResult> {
+    fn check_line_length(&self, content: &str, _file_path: &str) -> Vec<LintResult> {
         let mut results = vec![];
         let max_length = self.config.rules.line_length.max;
 
@@ -130,7 +124,6 @@ impl RuleChecker {
 
             if line.len() > max_length {
                 results.push(LintResult {
-                    file: file_path.to_string(),
                     line: line_num,
                     column: max_length + 1,
                     severity: Severity::Warning,
@@ -144,7 +137,7 @@ impl RuleChecker {
         results
     }
 
-    fn check_empty_lines(&self, content: &str, file_path: &str) -> Vec<LintResult> {
+    fn check_empty_lines(&self, content: &str, _file_path: &str) -> Vec<LintResult> {
         let mut results = vec![];
         let lines: Vec<&str> = content.lines().collect();
         let mut consecutive_empty = 0;
@@ -157,7 +150,6 @@ impl RuleChecker {
 
                 if consecutive_empty > self.config.rules.empty_lines.max_consecutive {
                     results.push(LintResult {
-                        file: file_path.to_string(),
                         line: line_num,
                         column: 1,
                         severity: Severity::Warning,
@@ -179,7 +171,6 @@ impl RuleChecker {
 
         if start_empty > self.config.rules.empty_lines.max_start {
             results.push(LintResult {
-                file: file_path.to_string(),
                 line: 1,
                 column: 1,
                 severity: Severity::Warning,
@@ -192,31 +183,28 @@ impl RuleChecker {
         results
     }
 
-    fn check_required_fields(&self, value: &Value, file_path: &str) -> Vec<LintResult> {
+    fn check_required_fields(&self, value: &Value, _file_path: &str) -> Vec<LintResult> {
         let mut results = vec![];
 
-        for (pattern, required_fields) in &self.config.rules.required_fields.paths {
-            // Простая проверка паттерна (можно заменить на glob)
-            if file_path.contains(pattern.trim_matches('*').trim_matches('/')) {
-                self.check_required_in_value(value, required_fields, file_path, &mut results);
-            }
+        for (_pattern, required_fields) in &self.config.rules.required_fields.paths {
+            self.check_required_in_value(value, required_fields, &mut results);
         }
 
         results
     }
 
     fn check_required_in_value(&self, value: &Value, required_fields: &[String],
-                               file_path: &str, results: &mut Vec<LintResult>) {
+                               results: &mut Vec<LintResult>) {
         if let Value::Mapping(mapping) = value {
             for field in required_fields {
                 let parts: Vec<&str> = field.split('.').collect();
-                self.check_nested_field(mapping, &parts, file_path, results);
+                self.check_nested_field(mapping, &parts, results);
             }
         }
     }
 
     fn check_nested_field(&self, mapping: &Mapping, parts: &[&str],
-                          file_path: &str, results: &mut Vec<LintResult>) {
+                          results: &mut Vec<LintResult>) {
         if parts.is_empty() {
             return;
         }
@@ -226,7 +214,6 @@ impl RuleChecker {
 
         if !mapping.contains_key(&key_value) {
             results.push(LintResult {
-                file: file_path.to_string(),
                 line: 1,
                 column: 1,
                 severity: Severity::Error,
@@ -240,19 +227,19 @@ impl RuleChecker {
         if parts.len() > 1 {
             if let Some(sub_value) = mapping.get(&key_value) {
                 if let Value::Mapping(sub_mapping) = sub_value {
-                    self.check_nested_field(sub_mapping, &parts[1..], file_path, results);
+                    self.check_nested_field(sub_mapping, &parts[1..], results);
                 }
             }
         }
     }
 
-    fn check_value_types(&self, value: &Value, file_path: &str) -> Vec<LintResult> {
+    fn check_value_types(&self, value: &Value, _file_path: &str) -> Vec<LintResult> {
         let mut results = vec![];
-        self.visit_value(value, file_path, &mut results);
+        self.visit_value(value, &mut results);
         results
     }
 
-    fn visit_value(&self, value: &Value, file_path: &str, results: &mut Vec<LintResult>) {
+    fn visit_value(&self, value: &Value, results: &mut Vec<LintResult>) {
         match value {
             Value::String(s) => {
                 // Проверка на boolean строки
@@ -260,7 +247,6 @@ impl RuleChecker {
                     let lower = s.to_lowercase();
                     if lower == "true" || lower == "false" || lower == "yes" || lower == "no" {
                         results.push(LintResult {
-                            file: file_path.to_string(),
                             line: 1,
                             column: 1,
                             severity: Severity::Warning,
@@ -275,7 +261,6 @@ impl RuleChecker {
                 if self.config.rules.value_types.strict_numbers {
                     if s.parse::<i64>().is_ok() || s.parse::<f64>().is_ok() {
                         results.push(LintResult {
-                            file: file_path.to_string(),
                             line: 1,
                             column: 1,
                             severity: Severity::Warning,
@@ -289,13 +274,13 @@ impl RuleChecker {
 
             Value::Mapping(mapping) => {
                 for (_, v) in mapping {
-                    self.visit_value(v, file_path, results);
+                    self.visit_value(v, results);
                 }
             }
 
             Value::Sequence(seq) => {
                 for v in seq {
-                    self.visit_value(v, file_path, results);
+                    self.visit_value(v, results);
                 }
             }
 
@@ -303,7 +288,7 @@ impl RuleChecker {
         }
     }
 
-    fn check_duplicates(&self, value: &Value, file_path: &str) -> Vec<LintResult> {
+    fn check_duplicates(&self, value: &Value, _file_path: &str) -> Vec<LintResult> {
         let mut results = vec![];
 
         if let Value::Mapping(mapping) = value {
@@ -313,7 +298,6 @@ impl RuleChecker {
                 if let Value::String(s) = k {
                     if !seen_keys.insert(s) {
                         results.push(LintResult {
-                            file: file_path.to_string(),
                             line: 1,
                             column: 1,
                             severity: self.config.rules.duplicates.level.clone(),

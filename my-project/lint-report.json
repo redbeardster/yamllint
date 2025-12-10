@@ -1,0 +1,52 @@
+{
+  "timestamp": "2025-12-10T19:19:17.823183647+00:00",
+  "summary": {
+    "total_files": 2,
+    "files_with_errors": 1,
+    "files_with_warnings": 0,
+    "total_errors": 3,
+    "total_warnings": 0,
+    "success_rate": 50.0
+  },
+  "reports": [
+    {
+      "file": "./configs/database.yaml",
+      "errors": 3,
+      "warnings": 0,
+      "passed": false,
+      "issues": [
+        {
+          "line": 1,
+          "column": 1,
+          "severity": "error",
+          "rule": "required-fields",
+          "message": "Missing required field: apiVersion",
+          "snippet": ""
+        },
+        {
+          "line": 1,
+          "column": 1,
+          "severity": "error",
+          "rule": "required-fields",
+          "message": "Missing required field: kind",
+          "snippet": ""
+        },
+        {
+          "line": 1,
+          "column": 1,
+          "severity": "error",
+          "rule": "required-fields",
+          "message": "Missing required field: metadata",
+          "snippet": ""
+        }
+      ]
+    },
+    {
+      "file": "./kubernetes/deployment.yaml",
+      "errors": 0,
+      "warnings": 0,
+      "passed": true,
+      "issues": []
+    }
+  ]
+}

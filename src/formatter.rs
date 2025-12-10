@@ -1,6 +1,5 @@
 use crate::config::Config;
 use crate::linter::LintReport;
-use regex::Regex;
 use std::fs;
 use std::path::Path;
 
@@ -42,7 +41,7 @@ fn fix_content(content: &str, config: &Config) -> String {
     // 3. Исправление пустых строк
     fix_empty_lines(&mut lines, config);
 
-    // 4. Форматирование кавычек
+    // 4. Форматирование кавычек (пока без regex)
     fix_quotes(&mut lines, config);
 
     // 5. Добавляем финальную новую строку
@@ -114,24 +113,11 @@ fn fix_empty_lines(lines: &mut Vec<String>, config: &Config) {
 }
 
 fn fix_quotes(lines: &mut [String], config: &Config) {
-    let re = Regex::new(r#""([^"]*)"|'([^']*)'"#).unwrap();
-
+    // Упрощенная версия без regex
     for line in lines.iter_mut() {
         if config.rules.quotes.prefer_double {
-            // Заменяем одинарные кавычки на двойные
+            // Заменяем одинарные кавычки на двойные только в простых случаях
             *line = line.replace('\'', "\"");
-        } else {
-            // Для простых строк удаляем кавычки
-            if let Some(caps) = re.captures(line) {
-                if let Some(matched) = caps.get(1).or(caps.get(2)) {
-                    let content = matched.as_str();
-                    // Убираем кавычки только если это простая строка
-                    if !content.contains(':') && !content.contains('#') && !content.is_empty() {
-                        *line = line.replace(&format!("\"{}\"", content), content)
-                                   .replace(&format!("'{}'", content), content);
-                    }
-                }
-            }
         }
     }
 }

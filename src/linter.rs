@@ -11,6 +11,14 @@ pub struct LintReport {
     pub passed: bool,
 }
 
+#[derive(Debug)]
+pub struct ValidationResult {
+    pub file: String,
+    pub valid: bool,
+    pub errors: Vec<String>,
+    pub warnings: Vec<String>,
+}
+
 pub struct YamlLinter {
     pub config: Config,
     checker: RuleChecker,
@@ -154,12 +162,4 @@ impl YamlLinter {
             }
         }
     }
-}
-
-#[derive(Debug)]
-pub struct ValidationResult {
-    pub file: String,
-    pub valid: bool,
-    pub errors: Vec<String>,
-    pub warnings: Vec<String>,
 }

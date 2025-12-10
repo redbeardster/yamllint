@@ -1,0 +1,34 @@
+rules:
+  indentation:
+    spaces: 2
+    check_multi_line_strings: true
+  line_length:
+    max: 120
+    allow_non_breakable_words: true
+  trailing_spaces:
+    level: error
+  empty_lines:
+    max_start: 0
+    max_end: 1
+    max_consecutive: 2
+  required_fields:
+    paths:
+      '**/k8s/*.yaml':
+      - apiVersion
+      - kind
+      - metadata.name
+  value_types:
+    strict_numbers: true
+    check_bool_values: true
+  duplicates:
+    level: error
+  quotes:
+    prefer_double: false
+format:
+  auto_fix: false
+  backup_files: true
+  indent_sequence: true
+exclude:
+- '**/node_modules/'
+- '**/.git/'
+- '**/vendor/'

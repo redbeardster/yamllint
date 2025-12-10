@@ -1,0 +1,11 @@
+{
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "name": "app_db",
+    "pool": {
+      "max": 20,
+      "min": 5
+    }
+  }
+}

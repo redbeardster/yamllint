@@ -1,8 +1,8 @@
 [package]
 name = "yamllint-rs"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-description = "A YAML linter and formatter written in Rust"
+description = "A fast YAML linter, formatter, and converter written in Rust"
 authors = ["Your Name <email@example.com>"]
 license = "MIT"
 
@@ -20,5 +20,5 @@ thiserror = "1.0"
 regex = "1.10"
 colored = "2.1"
 ignore = "0.4"
-lazy_static = "1.4"
 walkdir = "2.4"
+chrono = { version = "0.4", features = ["serde"] }
